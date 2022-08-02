@@ -4,7 +4,7 @@
   "homepage": "https://bean.money",
   "author": "Silo Chad <silochad@bean.farm>",
   "scripts": {
-    "build": "tsc",
+    "build": "yarn generate && tsc",
     "start": "node -r dotenv/config dist/index.js",
     "build-dev": "tsc-watch",
     "start-dev": "ts-node -r dotenv/config src/index.ts",
