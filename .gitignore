@@ -1,0 +1,6 @@
+generated/
+node_modules/
+dist/
+out/
+src/generated
+.DS_Store
