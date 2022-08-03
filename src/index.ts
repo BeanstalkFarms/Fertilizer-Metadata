@@ -114,12 +114,12 @@ const generate_metadata = (
     `./out/${uri}.json`,
     JSON.stringify({
       name: `Fertilizer ${token.id}`,
-      description: `An ERC-1155 token that Beanstalk mints in exchange for USDC. Fertilizer comes with Sprouts, which represent debt to be repaid by Beanstalk in the form of new Beans. Fertilizer has no fixed maturity.`,
+      description: `A trusty constituent of any Farmer's toolbox, ERC-1155 FERT has been known to spur new growth on seemingly dead farms. Once purchased and deployed into fertile ground by Farmers, Fertilizer generates new Sprouts: future Beans yet to be repaid by Beanstalk in exchange for doing the work of Replanting the protocol.`,
       image: `https://fert.bean.money/${uri}`,
       properties: {
-        humidity: (token.humidity*100),
-        season: token.season,
-        remaining: (data.bpfRemaining/1E6).toFixed(6)
+        humidity:   (token.humidity*100),
+        season:     token.season,
+        remaining:  (data.bpfRemaining/1E6).toFixed(6)
       }
     }),
     'utf-8'
