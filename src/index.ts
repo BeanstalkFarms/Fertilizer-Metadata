@@ -54,6 +54,18 @@ const mockData = {
   ]
 }
 
+/////////////////////////////////// Subgraph ///////////////////////////////////
+
+const run_query = async () : Promise<(typeof mockData)> => {
+  console.log(`Querying subgraph for Fertilizer data.`)
+  return new Promise((resolve) => {
+    setTimeout(() => { 
+      console.log(`Queried Fertilizer data: ${mockData.tokens.length} tokens.`)
+      resolve(mockData);
+    }, 3000);
+  });
+}
+
 /////////////////////////////////// Utilities ///////////////////////////////////
 
 const get_uri = (token: string | number) => token.toString(16).toLowerCase().padStart(64, "0");
@@ -155,7 +167,7 @@ const generate_index = (query: typeof mockData) => {
 ///////////////////////////////// Execute /////////////////////////////////
 
 const load = async () => {
-  const query = mockData;
+  const query = await run_query();
   for(let i = 0; i < query.tokens.length; i++) {
     const token         = query.tokens[i];
     const uri           = get_uri(token.id);
