@@ -54,6 +54,10 @@ const mockData = {
   ]
 }
 
+/////////////////////////////////// Utilities ///////////////////////////////////
+
+const get_uri = (token: string | number) => token.toString(16).toLowerCase().padStart(64, "0");
+
 ///////////////////////////////// Generate Image /////////////////////////////////
 
 const WIDTH = 600;
@@ -119,11 +123,33 @@ const generate_metadata = (
       properties: {
         humidity:   (token.humidity*100),
         season:     token.season,
-        remaining:  (data.bpfRemaining/1E6).toFixed(6)
+        remaining:  (data.bpfRemaining/1E6).toFixed(6),
       }
     }),
     'utf-8'
   );
+}
+
+///////////////////////////// Generate index //////////////////////////////
+
+const generate_index = (query: typeof mockData) => {
+  fs.writeFileSync(
+    `./dist/index.html`,
+    `
+<html>
+  <head><title>Fertilizer</title></head>
+  <body>
+    <h1>Fertilizer</h1>
+    <p>Showing currently minted Fertilizer tokens. For more information, see <a href="https://bean.money">bean.money</a>.</p>
+    <ul>
+      ${query.tokens.map((token) => {
+        const uri = get_uri(token.id);
+        return `<li><a href="/${uri}.json">${uri}</a></li>`;
+      })}
+    </ul>
+  </body>
+</html>`.trim()
+  )
 }
 
 ///////////////////////////////// Execute /////////////////////////////////
@@ -131,18 +157,19 @@ const generate_metadata = (
 const load = async () => {
   const query = mockData;
   for(let i = 0; i < query.tokens.length; i++) {
-    const token = query.tokens[i];
-    const uri   = token.id.toString(16).toLowerCase().padStart(64, "0");
-    const bpfRemaining = Math.max(token.endBpf - query.bpf, 0); // cap at endBpf
-    const pct   = (query.bpf - token.startBpf) / (token.id - token.startBpf);
+    const token         = query.tokens[i];
+    const uri           = get_uri(token.id);
+    const bpfRemaining  = Math.max(token.endBpf - query.bpf, 0); // cap at endBpf
+    const pct           = (query.bpf - token.startBpf) / (token.id - token.startBpf);
     console.log(`id = ${token.id} season = ${token.season} uri = ${uri} bpfRemaining = ${(bpfRemaining/1E6).toFixed(2)} pct = ${(pct*100).toFixed(2)}`);
     const data = {
       bpfRemaining,
       pct,
     };
-    generate_metadata(token, uri, data)
+    generate_metadata(token, uri, data);
     generate_image(token, uri, data);
   }
+  generate_index(query);
 };
 
 load();
