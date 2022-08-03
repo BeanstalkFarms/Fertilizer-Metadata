@@ -2,7 +2,6 @@ import fs from "fs";
 import { SVG, registerWindow, Svg, Text } from '@svgdotjs/svg.js';
 import fertilizer_bag from "./svg/bag";
 
-
 ///////////////////////////////// SVG Setup /////////////////////////////////
 
 const { config, createSVGWindow } = require('svgdom');
