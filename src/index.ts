@@ -98,7 +98,7 @@ const generate_image = (
 
   // Write
   fs.writeFileSync(
-    `./out/${uri}.svg`,
+    `./dist/${uri}.svg`,
     canvas.svg().toString()
   );
 }
@@ -111,7 +111,7 @@ const generate_metadata = (
   data: ExtraData,
 ) => {
   fs.writeFileSync(
-    `./out/${uri}.json`,
+    `./dist/${uri}.json`,
     JSON.stringify({
       name: `Fertilizer ${token.id}`,
       description: `A trusty constituent of any Farmer's toolbox, ERC-1155 FERT has been known to spur new growth on seemingly dead farms. Once purchased and deployed into fertile ground by Farmers, Fertilizer generates new Sprouts: future Beans yet to be repaid by Beanstalk in exchange for doing the work of Replanting the protocol.`,
