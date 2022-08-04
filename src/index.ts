@@ -32,6 +32,7 @@ type FertilizerToken = {
 type ExtraData = {
   bpfRemaining: number;
   pct: number;
+  now: Date;
 }
 
 ///////////////////////////////// Mock Data /////////////////////////////////
@@ -62,13 +63,13 @@ const run_query = async () : Promise<(typeof mockData)> => {
     setTimeout(() => { 
       console.log(`Queried Fertilizer data: ${mockData.tokens.length} tokens.`)
       resolve(mockData);
-    }, 3000);
+    }, 0);
   });
 }
 
 /////////////////////////////////// Utilities ///////////////////////////////////
 
-const get_uri = (token: string | number) => token.toString(16).toLowerCase().padStart(64, "0");
+const make_id = (id: string | number) => id.toString()
 
 ///////////////////////////////// Generate Image /////////////////////////////////
 
@@ -123,25 +124,77 @@ const generate_image = (
 
 const generate_metadata = (
   token: FertilizerToken,
-  uri: string,
+  id: string,
   data: ExtraData,
 ) => {
   fs.writeFileSync(
-    `./dist/${uri}.json`,
+    `./dist/${id}.json`,
     JSON.stringify({
-      name: `Fertilizer ${token.id}`,
+      ///
+      name: `Fertilizer - ${token.id}`,
+      external_url: `https://fert.bean.money/${token.id}.html`,
       description: `A trusty constituent of any Farmer's toolbox, ERC-1155 FERT has been known to spur new growth on seemingly dead farms. Once purchased and deployed into fertile ground by Farmers, Fertilizer generates new Sprouts: future Beans yet to be repaid by Beanstalk in exchange for doing the work of Replanting the protocol.`,
-      image: `https://fert.bean.money/${uri}`,
-      properties: {
-        humidity:   (token.humidity*100),
-        season:     token.season,
-        remaining:  (data.bpfRemaining/1E6).toFixed(6),
-      }
-    }),
+      image: `https://fert.bean.money/${id}`,
+      attributes: [
+        {
+          trait_type: "Season",
+          value: token.season
+        },
+        {
+          trait_type: "Humidity",
+          display_type: "boost_percentage",
+          value: token.humidity*100,
+        },
+        {
+          trait_type: "BPF Remaining",
+          display_type: "boost_number",
+          value: (data.bpfRemaining/1E6).toFixed(2)
+        },
+        {
+          trait_type: "Updated At",
+          display_type: "date",
+          value: Math.floor(data.now.getTime()/1000)
+        },
+      ]
+    }, null, 2),
     'utf-8'
   );
 }
 
+///////////////////////////////// Generate View /////////////////////////////////
+
+const generate_view = (
+  token: FertilizerToken,
+  id: string,
+  data: ExtraData,
+) => {
+  const uri = `https://fert.bean.money/${id}`;
+  fs.writeFileSync(
+    `./dist/${id}.html`,
+    `
+<html>
+  <head><title>Fertilizer ${id}</title></head>
+  <body>
+    <h1>Fertilizer ${id}</h1>
+    <p>Showing currently minted Fertilizer tokens. For more information, see <a href="https://bean.money">bean.money</a>.</p>
+    <ul>
+      <li>Season minted: ${(token.season)}</li>
+      <li>Humidity: ${(token.humidity*100).toFixed(2)}%</li>
+      <li>BPF Remaining: ${(data.bpfRemaining/1E6).toFixed(2)} of ${((token.id - token.startBpf)/1E6).toFixed(2)} (${(data.pct*100).toFixed(2)}%)</li>
+      <li>Updated At: ${data.now.toLocaleString()}</li>
+    </ul>
+    <p></p>
+    <p>
+      Metadata: <a href="${uri}.json">${uri}.json</a><br/>
+      Image: <a href="${uri}.svg">${uri}.svg</a><br/>
+      OpenSea: <a href="https://opensea.io/assets/ethereum/0x402c84de2ce49af88f5e2ef3710ff89bfed36cb6/${id}" target="_blank" rel="noreferrer">${id}</a>
+    </p>
+    <p></p>
+    <p style="font-size: 12px; opacity: 0.7;">Fertilizer is an ERC-1155 token. Its metadata will be updated to reflect the number of Beans remaining to be minted per Fertilizer (BPF). <a href="https://github.com/BeanstalkFarms/Fertilizer-Metadata" target="_blank" rel="noreferrer">View source</a> &middot; <a href="index.html">Home</a></p>
+  </body>
+</html>`.trim()
+  )
+}
 ///////////////////////////// Generate index //////////////////////////////
 
 const generate_index = (query: typeof mockData) => {
@@ -155,10 +208,12 @@ const generate_index = (query: typeof mockData) => {
     <p>Showing currently minted Fertilizer tokens. For more information, see <a href="https://bean.money">bean.money</a>.</p>
     <ul>
       ${query.tokens.map((token) => {
-        const uri = get_uri(token.id);
+        const uri = make_id(token.id);
         return `<li><a href="/${uri}.json">${uri}</a></li>`;
       })}
     </ul>
+    <p></p>
+    <p style="font-size: 12px; opacity: 0.7;">Fertilizer is an ERC-1155 token. Its metadata will be updated to reflect the number of Beans remaining to be minted per Fertilizer (BPF). <a href="https://github.com/BeanstalkFarms/Fertilizer-Metadata" target="_blank" rel="noreferrer">View source</a></p>
   </body>
 </html>`.trim()
   )
@@ -170,16 +225,18 @@ const load = async () => {
   const query = await run_query();
   for(let i = 0; i < query.tokens.length; i++) {
     const token         = query.tokens[i];
-    const uri           = get_uri(token.id);
+    const id            = make_id(token.id);
     const bpfRemaining  = Math.max(token.endBpf - query.bpf, 0); // cap at endBpf
     const pct           = (query.bpf - token.startBpf) / (token.id - token.startBpf);
-    console.log(`id = ${token.id} season = ${token.season} uri = ${uri} bpfRemaining = ${(bpfRemaining/1E6).toFixed(2)} pct = ${(pct*100).toFixed(2)}`);
+    console.log(`id = ${token.id} season = ${token.season} id = ${id} bpfRemaining = ${(bpfRemaining/1E6).toFixed(2)} pct = ${(pct*100).toFixed(2)}`);
     const data = {
       bpfRemaining,
       pct,
+      now: new Date(),
     };
-    generate_metadata(token, uri, data);
-    generate_image(token, uri, data);
+    generate_metadata(token, id, data);
+    generate_view(token, id, data);
+    generate_image(token, id, data);
   }
   generate_index(query);
 };
