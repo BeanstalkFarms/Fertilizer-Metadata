@@ -130,7 +130,6 @@ const generate_metadata = (
   fs.writeFileSync(
     `./dist/${id}.json`,
     JSON.stringify({
-      ///
       name: `Fertilizer - ${token.id}`,
       external_url: `https://fert.bean.money/${token.id}.html`,
       description: `A trusty constituent of any Farmer's toolbox, ERC-1155 FERT has been known to spur new growth on seemingly dead farms. Once purchased and deployed into fertile ground by Farmers, Fertilizer generates new Sprouts: future Beans yet to be repaid by Beanstalk in exchange for doing the work of Replanting the protocol.`,
@@ -156,7 +155,7 @@ const generate_metadata = (
           value: Math.floor(data.now.getTime()/1000)
         },
       ]
-    }, null, 2),
+    }),
     'utf-8'
   );
 }
@@ -209,7 +208,7 @@ const generate_index = (query: typeof mockData) => {
     <ul>
       ${query.tokens.map((token) => {
         const uri = make_id(token.id);
-        return `<li><a href="/${uri}.json">${uri}</a></li>`;
+        return `<li><a href="/${uri}.html">${uri}</a></li>`;
       })}
     </ul>
     <p></p>
