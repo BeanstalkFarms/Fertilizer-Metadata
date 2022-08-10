@@ -66,13 +66,17 @@ const SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/cujowolf/beanstalk
 const paginate_fertilizer = async (_season_gt: number) => {
   let results : FertilizerToken[] = []; 
   let season_gt = _season_gt;
+  let max_requests = 100
+  const page_size = 1000;
+  let i = 0;
   while (true) {
+    i += 1;
     console.log(`paginate: season >= ${season_gt}`)
     const result = await fetch(SUBGRAPH_URL, {
       method: 'POST',
       body: JSON.stringify({
         query: `query($season_gt: Int!) {
-          fertilizerTokens(where: { season_gt: $season_gt }, orderBy: season, orderDirection: asc, first: 10) {
+          fertilizerTokens(where: { season_gt: $season_gt }, orderBy: season, orderDirection: asc, first: ${page_size}) {
             id
             supply
             humidity
@@ -85,10 +89,19 @@ const paginate_fertilizer = async (_season_gt: number) => {
       })
     })
     .then((r) => r.json() as unknown as { data: { fertilizerTokens: FertilizerToken[] } });
-    if (result.data.fertilizerTokens.length === 0) break;
-    season_gt = result.data.fertilizerTokens[result.data.fertilizerTokens.length - 1].season;
-    results.push(...result.data.fertilizerTokens);
+    /// add new tokens 
+    const tokens = result.data.fertilizerTokens;
+    results.push(...tokens);
+    /// break if loaded all data
+    if (tokens.length === 0 || tokens.length < page_size) break;
+    season_gt = tokens[tokens.length - 1].season;
+    /// failsafe: prevent infinite loops
+    if (i >= max_requests) {
+      console.error(`reached max requests: ${max_requests}`);
+      break;
+    }
   }
+  console.log(`loaded ${results.length} tokens in ${i} queries`)
   return results;
 }
 
