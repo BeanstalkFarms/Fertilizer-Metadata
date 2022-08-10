@@ -193,7 +193,7 @@ const generate_metadata = (
         {
           trait_type: "BPF Remaining",
           display_type: "boost_number",
-          value: (data.bpfRemaining/1E6).toFixed(2)
+          value: parseFloat((data.bpfRemaining/1E6).toFixed(2))
         },
         {
           trait_type: "Updated At",
