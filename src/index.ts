@@ -188,7 +188,7 @@ const generate_metadata = (
         {
           trait_type: "Humidity",
           display_type: "boost_percentage",
-          value: token.humidity*100,
+          value: token.humidity*1,
         },
         {
           trait_type: "BPF Remaining",
@@ -224,7 +224,7 @@ const generate_view = (
     <p>Showing currently minted Fertilizer tokens. For more information, see <a href="https://bean.money">bean.money</a>.</p>
     <ul>
       <li>Season minted: ${(token.season)}</li>
-      <li>Humidity: ${(token.humidity*100).toFixed(2)}%</li>
+      <li>Humidity: ${(token.humidity*1).toFixed(2)}%</li>
       <li>BPF Remaining: ${(data.bpfRemaining/1E6).toFixed(2)} of ${((token.id - token.startBpf)/1E6).toFixed(2)} (${(data.pct*100).toFixed(2)}%)</li>
       <li>Updated At: ${data.now.toLocaleString()}</li>
     </ul>
