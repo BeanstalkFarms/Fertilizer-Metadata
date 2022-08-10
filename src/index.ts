@@ -177,7 +177,7 @@ const generate_metadata = (
     name: `Fertilizer - ${token.id}`,
     external_url: `https://fert.bean.money/${token.id}.html`,
     description: `A trusty constituent of any Farmer's toolbox, ERC-1155 FERT has been known to spur new growth on seemingly dead farms. Once purchased and deployed into fertile ground by Farmers, Fertilizer generates new Sprouts: future Beans yet to be repaid by Beanstalk in exchange for doing the work of Replanting the protocol.`,
-    image: `https://fert.bean.money/${id}.svg?${data.now.getTime()}`,
+    image: `https://fert.bean.money/fertilizer.png?${data.now.getTime()}`,
     attributes: [
       {
         trait_type: "Season",
@@ -291,6 +291,7 @@ const load = async () => {
     generate_image(token, id, data);
   }
   generate_index(tokens);
+  fs.copyFileSync('./src/img/fertilizer.png', './dist/fertilizer.png');
 };
 
 load();
