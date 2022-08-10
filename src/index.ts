@@ -255,7 +255,7 @@ const generate_index = (tokens: FertilizerToken[]) => {
       ${tokens.map((token) => {
         const uri = make_id(token.id);
         return `<li><a href="/${uri}.html">${uri}</a></li>`;
-      })}
+      }).join('')}
     </ul>
     <p></p>
     <p style="font-size: 12px; opacity: 0.7;">Fertilizer is an ERC-1155 token. Its metadata will be updated to reflect the number of Beans remaining to be minted per Fertilizer (BPF). <a href="https://github.com/BeanstalkFarms/Fertilizer-Metadata" target="_blank" rel="noreferrer">View source</a></p>
