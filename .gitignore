@@ -5,3 +5,4 @@ out/
 src/generated
 .DS_Store
 research/
+.env

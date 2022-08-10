@@ -3,14 +3,17 @@ import { Beanstalk__factory, Fertilizer__factory } from "./generated";
 
 ///////////////////////////////// Constants /////////////////////////////////
 
-const chainId = 1337;
-const rpc = 'http://localhost:8545';
+const chainId = process.env.CHAIN_ID;
+const rpc = process.env.RPC_URL;
+
+if (!chainId) throw new Error('Missing env var: CHAIN_ID')
+if (!rpc) throw new Error('Missing env var: RPC_URL')
 
 ///////////////////////////////// Contracts /////////////////////////////////
 
 const provider = new ethers.providers.JsonRpcProvider(
   rpc,
-  { name: 'Unknown', chainId }
+  { name: 'Unknown', chainId: parseInt(chainId) }
 );
 
 export default {

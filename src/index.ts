@@ -1,6 +1,11 @@
+require('dotenv').config()
 import fs from "fs";
 import { SVG, registerWindow, Svg, Text } from '@svgdotjs/svg.js';
 import fertilizer_bag from "./svg/bag";
+import fetch from 'cross-fetch';
+import contracts from "./contracts";
+import { ethers } from "ethers";
+import { Fertilizer } from "./generated";
 
 ///////////////////////////////// SVG Setup /////////////////////////////////
 
@@ -57,14 +62,42 @@ const mockData = {
 
 /////////////////////////////////// Subgraph ///////////////////////////////////
 
-const run_query = async () : Promise<(typeof mockData)> => {
+const SUBGRAPH_URL = 'https://api.thegraph.com/subgraphs/name/cujowolf/beanstalk';
+const paginate_fertilizer = async (_season_gt: number) => {
+  let results : FertilizerToken[] = []; 
+  let season_gt = _season_gt;
+  while (true) {
+    console.log(`paginate: season >= ${season_gt}`)
+    const result = await fetch(SUBGRAPH_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: `query($season_gt: Int!) {
+          fertilizerTokens(where: { season_gt: $season_gt }, orderBy: season, orderDirection: asc, first: 10) {
+            id
+            supply
+            humidity
+            endBpf
+            startBpf
+            season
+          }
+        }`,
+        variables: { season_gt }
+      })
+    })
+    .then((r) => r.json() as unknown as { data: { fertilizerTokens: FertilizerToken[] } });
+    if (result.data.fertilizerTokens.length === 0) break;
+    season_gt = result.data.fertilizerTokens[result.data.fertilizerTokens.length - 1].season;
+    results.push(...result.data.fertilizerTokens);
+  }
+  return results;
+}
+
+const run_query = async () : Promise<[FertilizerToken[], ethers.BigNumber]> => {
   console.log(`Querying subgraph for Fertilizer data.`)
-  return new Promise((resolve) => {
-    setTimeout(() => { 
-      console.log(`Queried Fertilizer data: ${mockData.tokens.length} tokens.`)
-      resolve(mockData);
-    }, 0);
-  });
+  return Promise.all([
+    paginate_fertilizer(0),
+    contracts.beanstalk.beansPerFertilizer(),
+  ])
 }
 
 /////////////////////////////////// Utilities ///////////////////////////////////
@@ -196,7 +229,7 @@ const generate_view = (
 }
 ///////////////////////////// Generate index //////////////////////////////
 
-const generate_index = (query: typeof mockData) => {
+const generate_index = (tokens: FertilizerToken[]) => {
   fs.writeFileSync(
     `./dist/index.html`,
     `
@@ -206,7 +239,7 @@ const generate_index = (query: typeof mockData) => {
     <h1>Fertilizer</h1>
     <p>Showing currently minted Fertilizer tokens. For more information, see <a href="https://bean.money">bean.money</a>.</p>
     <ul>
-      ${query.tokens.map((token) => {
+      ${tokens.map((token) => {
         const uri = make_id(token.id);
         return `<li><a href="/${uri}.html">${uri}</a></li>`;
       })}
@@ -221,12 +254,13 @@ const generate_index = (query: typeof mockData) => {
 ///////////////////////////////// Execute /////////////////////////////////
 
 const load = async () => {
-  const query = await run_query();
-  for(let i = 0; i < query.tokens.length; i++) {
-    const token         = query.tokens[i];
+  const [tokens, _bpf] = await run_query();
+  const bpf = _bpf.toNumber();
+  for(let i = 0; i < tokens.length; i++) {
+    const token         = tokens[i];
     const id            = make_id(token.id);
-    const bpfRemaining  = Math.max(token.endBpf - query.bpf, 0); // cap at endBpf
-    const pct           = (query.bpf - token.startBpf) / (token.id - token.startBpf);
+    const bpfRemaining  = Math.max(token.endBpf - bpf, 0); // cap at endBpf
+    const pct           = (bpf - token.startBpf) / (token.id - token.startBpf);
     console.log(`id = ${token.id} season = ${token.season} id = ${id} bpfRemaining = ${(bpfRemaining/1E6).toFixed(2)} pct = ${(pct*100).toFixed(2)}`);
     const data = {
       bpfRemaining,
@@ -237,7 +271,7 @@ const load = async () => {
     generate_view(token, id, data);
     generate_image(token, id, data);
   }
-  generate_index(query);
+  generate_index(tokens);
 };
 
 load();
